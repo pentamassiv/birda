@@ -44,9 +44,6 @@
 # Git worktrees
 /.worktrees/
 
-# LEANN index
-/.leann/
-
 # Native libraries. birda links ONNX Runtime dynamically, so a working checkout
 # usually has a libonnxruntime next to the binary (and the CUDA and cuDNN set
 # alongside it on GPU machines). Those are fetched per platform by the release
