@@ -41,7 +41,7 @@ cargo test --no-default-features --features gen-registry --no-fail-fast --test r
 
 The MSRV job also runs `cargo check --locked --no-default-features --all-targets` on the toolchain named by `rust-version`. Locally that is `cargo +<rust-version> check --locked --no-default-features --all-targets`.
 
-`task check` and the `hooks/pre-commit` hook run a narrower clippy: default features and no `--all-targets`, so test code is not linted. Run the commands above before pushing.
+`task check` runs the same commands (the MSRV job aside), and the pre-commit hook from `task install-hooks` runs the fmt and clippy lines when a commit stages `.rs` files. `CLIPPY_FLAGS` in `Taskfile.yml` and the clippy line in `hooks/pre-commit` must match the Lint job. Run `task check` before pushing.
 
 ### Lints
 

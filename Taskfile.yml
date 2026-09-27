@@ -4,6 +4,10 @@ version: "3"
 
 vars:
   BINARY_NAME: birda
+  # The flags the Lint job in .github/workflows/ci.yml passes to clippy. CI
+  # builds CPU-only, --all-targets lints test code too, and gen-registry brings
+  # the feature-gated registry generator into scope.
+  CLIPPY_FLAGS: --no-default-features --features gen-registry --all-targets
 
 # Cross-compilation notes:
 # - Native builds include CUDA support by default
@@ -14,16 +18,17 @@ vars:
 
 tasks:
   default:
-    desc: Run all checks (fmt, clippy, test)
+    desc: Run all checks (fmt, clippy, tests, registry)
     cmds:
       - task: check
 
   check:
-    desc: Run all quality checks
+    desc: Run the checks CI runs, except the MSRV job
     cmds:
       - task: fmt:check
       - task: clippy
       - task: test
+      - task: test:registry
 
   fmt:
     desc: Format code with rustfmt
@@ -36,24 +41,32 @@ tasks:
       - cargo fmt --check
 
   clippy:
-    desc: Run clippy linter with strict warnings
+    desc: Run clippy on all targets with CI's flags and strict warnings
     cmds:
-      - cargo clippy -- -D warnings
+      - cargo clippy {{.CLIPPY_FLAGS}} -- -D warnings
 
   clippy:fix:
-    desc: Run clippy and apply automatic fixes
+    desc: Run clippy with CI's flags and apply automatic fixes
     cmds:
-      - cargo clippy --fix --allow-dirty --allow-staged
+      - cargo clippy {{.CLIPPY_FLAGS}} --fix --allow-dirty --allow-staged
 
   test:
-    desc: Run all tests
+    desc: Run tests on a CPU-only build, as CI does
     cmds:
-      - cargo test
+      - cargo test --no-default-features
+
+  # The generator and its drift test sit behind the gen-registry feature, so
+  # the test task above never reaches them. CI runs these two as its own step.
+  test:registry:
+    desc: Test the registry generator and check registry.json is up to date
+    cmds:
+      - cargo test --no-default-features --features gen-registry --lib gen_registry
+      - cargo test --no-default-features --features gen-registry --test registry_generation
 
   test:verbose:
     desc: Run tests with verbose output
     cmds:
-      - cargo test -- --nocapture
+      - cargo test --no-default-features -- --nocapture
 
   build:
     desc: Build for current platform (debug, with CUDA)
@@ -144,11 +157,11 @@ tasks:
 
   # CI-specific tasks
   ci:
-    desc: Run full CI pipeline
+    desc: Run the CI checks, then a release build and the docs
     cmds:
       - task: fmt:check
       - task: clippy
-      - task: test
+      - task: ci:test
       - task: build:release
       - task: doc
 
@@ -159,9 +172,11 @@ tasks:
       - task: clippy
 
   ci:test:
-    desc: Run tests for CI
+    desc: Run tests as the CI Test job does
     cmds:
-      - cargo test --no-fail-fast
+      - cargo test --no-default-features --no-fail-fast
+      - cargo test --no-default-features --features gen-registry --no-fail-fast --lib gen_registry
+      - cargo test --no-default-features --features gen-registry --no-fail-fast --test registry_generation
 
   # Development helpers
   watch:

@@ -706,16 +706,16 @@ Audio is automatically resampled to the model's required sample rate (48kHz for 
 ### Development
 
 ```bash
-# Run all checks
+# Run CI's lint and test checks (formatting, clippy, tests, registry)
 task check
 
 # Format code
 task fmt
 
-# Run clippy linter
+# Run clippy on all targets, as CI does
 task clippy
 
-# Run tests
+# Run tests on a CPU-only build, as CI does
 task test
 
 # Build debug version

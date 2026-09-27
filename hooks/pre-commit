@@ -31,11 +31,12 @@ if [ -n "$STAGED_RS_FILES" ]; then
     fi
 fi
 
-# 2. Run Clippy
+# 2. Run Clippy, with the flags the Lint job in .github/workflows/ci.yml uses
+# (keep in step with CLIPPY_FLAGS in Taskfile.yml)
 if [ -n "$STAGED_RS_FILES" ]; then
     echo ""
     echo "🔎 Running Clippy..."
-    if ! cargo clippy -- -D warnings; then
+    if ! cargo clippy --no-default-features --features gen-registry --all-targets -- -D warnings; then
         echo -e "${RED}❌ Clippy found issues!${NC}"
         echo -e "${YELLOW}💡 Fix the issues above or run 'task clippy:fix' for automatic fixes${NC}"
         FAILED=1
